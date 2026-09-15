@@ -5,6 +5,15 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # VITE_API_BASE_URL and VITE_WS_URL must be set in Netlify Dashboard → Site Settings → Environment Variables
+  # VITE_API_BASE_URL = https://eva-bharat-api.onrender.com/api
+  # VITE_WS_URL       = wss://eva-bharat-api.onrender.com/api/ws
+
+# SPA redirect: serve index.html for all routes so hash-based navigation works on refresh
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 
 [[headers]]
   for = "/*"

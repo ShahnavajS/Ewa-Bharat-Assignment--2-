@@ -7,13 +7,15 @@ services:
     branch: main
     rootDir: backend
     dockerfilePath: ./Dockerfile
-    dockerContext: .
+    dockerContext: .          # relative to rootDir (backend/)
     healthCheckPath: /api/health
     maxShutdownDelaySeconds: 30
     envVars:
+      - key: PORT
+        value: "8080"
       - key: ENVIRONMENT
         value: production
       - key: DATABASE_URL
-        sync: false
+        sync: false           # Set manually in Render dashboard (Supabase connection string)
       - key: CORS_ALLOWED_ORIGINS
-        sync: false
+        sync: false           # Set manually: https://YOUR-SITE.netlify.app
