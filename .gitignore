@@ -1,0 +1,38 @@
+# Binaries and executables
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+
+# Test binary, output & cover profiles
+*.test
+*.out
+coverage.txt
+
+# Environment files with potential secrets
+.env
+.env.*
+!.env.example
+
+# Go workspaces
+go.work
+.gocache/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# IDE and Editor configs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node / frontend
+node_modules/
+.npm/
+*.tsbuildinfo
+supabase/.temp/

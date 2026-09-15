@@ -1,0 +1,75 @@
+name: verify
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: eva_media_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d eva_media_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/eva_media_test?sslmode=disable
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Backend tests with race detector
+        working-directory: backend
+        run: go test -race -count=1 ./...
+      - name: Backend static analysis
+        working-directory: backend
+        run: go vet ./...
+      - name: Frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Frontend tests
+        working-directory: frontend
+        run: npm test
+      - name: Frontend production build
+        working-directory: frontend
+        run: npm run build
+      - name: Supabase migration parity
+        run: |
+          cmp backend/migrations/000001_init_schema.up.sql supabase/migrations/20260915000100_init_schema.sql
+          cmp backend/migrations/000002_seed_data.up.sql supabase/migrations/20260915000200_seed_demo_data.sql
+      - name: End-to-end API and WebSocket flows
+        working-directory: backend
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/eva_media_test?sslmode=disable
+          EVA_API_BASE_URL: http://localhost:8080/api
+        run: |
+          go run ./cmd/server > /tmp/eva-api.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid' EXIT
+          for attempt in {1..30}; do
+            curl --fail --silent http://localhost:8080/api/health && break
+            if [ "$attempt" = 30 ]; then cat /tmp/eva-api.log; exit 1; fi
+            sleep 1
+          done
+          node ../scripts/test-playback.js
+          node ../scripts/test-playlist-manager.js
+      - name: Container builds
+        run: docker compose build backend frontend
