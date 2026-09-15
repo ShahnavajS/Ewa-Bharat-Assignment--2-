@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -83,6 +84,10 @@ func (h *Hub) originAllowed(origin string) bool {
 	if origin == "" || len(h.allowedOrigins) == 0 {
 		return true // Native clients do not send an Origin header.
 	}
+	if _, ok := h.allowedOrigins["*"]; ok {
+		return true
+	}
+	origin = strings.TrimSuffix(strings.TrimSpace(origin), "/")
 	_, ok := h.allowedOrigins[origin]
 	return ok
 }

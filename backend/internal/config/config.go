@@ -60,6 +60,7 @@ func parseOrigins(raw string) []string {
 	var origins []string
 	for _, part := range strings.Split(raw, ",") {
 		trimmed := strings.TrimSpace(part)
+		trimmed = strings.TrimSuffix(trimmed, "/")
 		if trimmed != "" {
 			origins = append(origins, trimmed)
 		}
